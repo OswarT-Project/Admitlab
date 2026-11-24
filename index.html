@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AdmitLab · 六维录取实验室</title>
+<meta name="description" content="把 GPA、标化、AP、竞赛、活动、材料（文书 / 推荐信 / 面试）折成六个刻度，生成你的六维录取画像，匹配梦校。娱乐向，不构成录取承诺。">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1020'/%3E%3Cpath d='M32 10 52 22v20L32 54 12 42V22z' fill='none' stroke='%236ee7b7' stroke-width='3'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%236ee7b7'/%3E%3C/svg%3E">
+</head>
+<body>
+<div class="bg-fx" aria-hidden="true"><span class="orb orb-a"></span><span class="orb orb-b"></span><span class="grid"></span></div>
+
+<header class="topbar">
+  <a class="brand" href="#top">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 40 40"><path d="M20 4 34 12v16L20 36 6 28V12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="20" cy="20" r="3.4" fill="currentColor"/><path d="M20 6v10M20 24v10M8 13l9 5M32 13l-9 5M8 27l9-5M32 27l-9-5" stroke="currentColor" stroke-width="1.1" opacity=".55"/></svg>
+    </span>
+    <span class="brand-text"><b>AdmitLab</b><small>六维录取实验室</small></span>
+    <span class="ver-pill js-version">v1.1.0</span>
+  </a>
+  <nav class="topnav" aria-label="页面导航">
+    <a href="#sec-dash" class="on">驾驶舱</a>
+    <a href="#sec-growth">成长</a>
+    <a href="#sec-input">录入</a>
+    <a href="#sec-schools">选校</a>
+    <a href="#sec-cohort">毕业生</a>
+    <a href="#sec-essay">文书工坊</a>
+    <a href="#sec-rubric">评分表</a>
+  </nav>
+  <div class="top-actions">
+    <button class="btn ghost small" id="btnSample" type="button">示例</button>
+    <button class="btn ghost small" id="btnSave" type="button">保存</button>
+    <button class="btn primary small" id="btnShare" type="button">生成分享卡</button>
+  </div>
+</header>
+
+<main id="top">
+  <!-- 1. 驾驶舱 -->
+  <section class="hero" id="sec-dash">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="dot"></span>AP · 中国申请者 · 美本 · 娱乐向</p>
+      <h1>你的六维<br><em>录取画像</em></h1>
+      <p class="lede">为 AP 体系的中国申请者做的六维测评：把 <b>GPA、标化、AP、竞赛、活动、材料</b> 折成六个刻度。材料由文书、推荐信、面试组成——还没写文书，也能先算。</p>
+
+      <div class="persona" id="persona">
+        <div class="persona-badge" id="personaGrade">S</div>
+        <div class="persona-body">
+          <strong id="personaName">正在计算…</strong>
+          <p id="personaDesc">把下面六张卡填一填，画像就会长出来。</p>
+          <div class="cohort-chip" id="cohortChip"></div>
+          <div class="cohort-chip" id="bgChip"></div>
+        </div>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat"><span>综合战力</span><b id="statPower">0</b><small id="statPowerNote">/ 100</small></div>
+        <div class="stat"><span>最强维度</span><b id="statTop">—</b><small id="statTopVal"></small></div>
+        <div class="stat"><span>最短板</span><b id="statWeak">—</b><small id="statWeakVal"></small></div>
+        <div class="stat"><span>保底校</span><b id="statSafe">—</b><small id="statSafeNote"></small></div>
+      </div>
+
+      <div class="hero-cta">
+        <a class="btn primary" href="#sec-input">开始打分</a>
+        <a class="btn ghost" href="#sec-schools">看看能去哪</a>
+      </div>
+      <p class="disclaimer">所有分数、录取概率都是娱乐向模型推算，不构成任何录取承诺。真实申请请咨询学校升学指导。</p>
+    </div>
+
+    <div class="hero-visual">
+      <div class="radar-card">
+        <div class="radar-head">
+          <span>六维雷达</span>
+          <div class="radar-controls">
+            <label class="mini-select">届别
+              <select id="overlayYear" aria-label="叠加哪一届毕业生平均"></select>
+            </label>
+            <div class="pick-wrap">
+              <button type="button" class="mini-pick" id="overlaySchoolBtn" aria-haspopup="true" aria-expanded="false">
+                梦校 <b id="overlaySchoolCount">0</b> ▾
+              </button>
+              <div class="school-picker" id="schoolPicker" hidden>
+                <input type="search" id="pickerSearch" placeholder="搜学校 / 关键词" autocomplete="off">
+                <div class="picker-list" id="pickerList"></div>
+                <div class="picker-foot"><span>最多叠加 4 所</span><button type="button" id="pickerClear">清空</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="radar-wrap">
+          <svg id="radar" viewBox="0 0 440 420" role="img" aria-label="六维能力雷达图"></svg>
+        </div>
+        <div class="radar-legend" id="radarLegend"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. 六维速览 -->
+  <section class="strip" aria-label="六维速览">
+    <div class="strip-inner" id="dimStrip"></div>
+  </section>
+
+  <!-- 3. 成长记录 -->
+  <section class="section growth" id="sec-growth">
+    <header class="sec-head">
+      <div>
+        <p class="sec-kicker">GROWTH / 成长记录</p>
+        <h2>和上一次的自己比</h2>
+        <p class="sec-sub">保存一张快照，过几周再回来看看哪一维长高了。数据只存在这台设备，不会上传。</p>
+      </div>
+      <div class="sec-tools">
+        <button class="btn ghost small" id="btnExport" type="button">导出存档</button>
+        <button class="btn ghost small" id="btnImport" type="button">导入存档</button>
+        <button class="btn primary small" id="btnSnapshot" type="button">保存这次快照</button>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+      </div>
+    </header>
+    <div class="growth-grid">
+      <div class="card growth-main" id="growthMain"></div>
+      <div class="card growth-side" id="growthSide"></div>
+    </div>
+  </section>
+
+  <!-- 4. 录入 -->
+  <section class="section" id="sec-input">
+    <header class="sec-head">
+      <div>
+        <p class="sec-kicker">01 / INPUT</p>
+        <h2>把你的高中三年，拆成六个数字</h2>
+        <p class="sec-sub">每一项都会自动算分，也可以手动锁定一个“我觉得我值这么多”。分数实时同步到楼上那张雷达图。没有文书？先用推荐信和面试把最后一维填起来。</p>
+      </div>
+      <div class="sec-tools">
+        <button class="btn ghost small" id="btnLockAll" type="button">全部自动算分</button>
+        <button class="btn ghost small" id="btnClearAll" type="button">清空重来</button>
+      </div>
+    </header>
+
+    <div class="demo-banner" id="demoBanner" hidden>
+      <span>👀 现在是一份示例数据（<b id="demoName">藤校卷王</b>），想算自己的就清空它。</span>
+      <button class="btn ghost small" type="button" id="btnBannerClear">清空，录入我自己的</button>
+    </div>
+
+    <div class="dim-grid">
+      <!-- GPA -->
+      <article class="card dim-card" data-dim="gpa" id="card-gpa">
+        <header class="card-head">
+          <div class="card-title">
+            <span class="dim-no">01</span>
+            <div><h3>GPA</h3><p>校内成绩 · 课程难度 · 排名</p></div>
+          </div>
+          <div class="score-badge" data-badge="gpa"><b>0</b><span>分</span></div>
+        </header>
+        <div class="card-body">
+          <div class="field-row">
+            <label class="field">
+              <span>评分制</span>
+              <select data-bind="gpa.scale">
+                <option value="4">4.0 制</option>
+                <option value="100">百分制</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>GPA / 平均分</span>
+              <input type="number" step="0.01" min="0" max="100" data-bind="gpa.value" inputmode="decimal">
+            </label>
+          </div>
+          <div class="field-row">
+            <label class="field">
+              <span>AP 课程量（体系：AP）</span>
+              <select data-bind="gpa.rigor">
+                <option value="regular">几乎没上 AP</option>
+                <option value="honors">荣誉 / 校本课程为主</option>
+                <option value="ap_light">AP 1–3 门</option>
+                <option value="ap_std">AP 4–6 门</option>
+                <option value="ap_heavy">AP 7 门以上 / 全 AP 课表</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>年级排名</span>
+              <select data-bind="gpa.rank">
+                <option value="none">学校不排名</option>
+                <option value="top1">前 1%</option>
+                <option value="top5">前 5%</option>
+                <option value="top10">前 10%</option>
+                <option value="top25">前 25%</option>
+                <option value="top50">前 50%</option>
+              </select>
+            </label>
+          </div>
+          <label class="field">
+            <span>成绩趋势</span>
+            <select data-bind="gpa.trend">
+              <option value="up">稳步上升</option>
+              <option value="flat">基本持平</option>
+              <option value="down">有下滑</option>
+            </select>
+          </label>
+          <div class="manual-row">
+            <label class="switch"><input type="checkbox" data-lock="gpa"><span></span>手动锁定</label>
+            <input class="manual-range" type="range" min="0" max="100" step="1" data-manual="gpa" disabled aria-label="手动设置GPA分数">
+            <output data-manual-out="gpa">—</output>
+          </div>
+        </div>
+        <footer class="card-foot"><span class="advice" data-advice="gpa">填一下，马上算。</span></footer>
+      </article>
+
+      <!-- 标化 -->
+      <article class="card dim-card" data-dim="test" id="card-test">
+        <header class="card-head">
+          <div class="card-title">
+            <span class="dim-no">02</span>
+            <div><h3>标化</h3><p>SAT / ACT · 托福 / 雅思</p></div>
+          </div>
+          <div class="score-badge" data-badge="test"><b>0</b><span>分</span></div>
+        </header>
+        <div class="card-body">
+          <div class="field-row">
+            <label class="field">
+              <span>SAT（400–1600）</span>
+              <input type="number" step="10" min="400" max="1600" placeholder="1520" data-bind="test.sat" inputmode="numeric">
+            </label>
+            <label class="field">
+              <span>ACT（1–36）</span>
+              <input type="number" step="1" min="1" max="36" placeholder="33" data-bind="test.act" inputmode="numeric">
+            </label>
+          </div>
+          <div class="field-row">
+            <label class="field">
+              <span>TOEFL（0–120）</span>
+              <input type="number" step="1" min="0" max="120" placeholder="110" data-bind="test.toefl" inputmode="numeric">
+            </label>
+            <label class="field">
+              <span>IELTS（0–9）</span>
+              <input type="number" step="0.5" min="0" max="9" placeholder="7.5" data-bind="test.ielts" inputmode="decimal">
+            </label>
+          </div>
+          <p class="hint">SAT / ACT 二选一填即可；托福雅思用于国际生语言项加权。</p>
+          <div class="manual-row">
+            <label class="switch"><input type="checkbox" data-lock="test"><span></span>手动锁定</label>
+            <input class="manual-range" type="range" min="0" max="100" step="1" data-manual="test" disabled aria-label="手动设置标化分数">
+            <output data-manual-out="test">—</output>
+          </div>
+        </div>
+        <footer class="card-foot"><span class="advice" data-advice="test">填一下，马上算。</span></footer>
+      </article>
+
+      <!-- AP -->
+      <article class="card dim-card" data-dim="ap" id="card-ap">
+        <header class="card-head">
+          <div class="card-title">
+            <span class="dim-no">03</span>
+            <div><h3>AP</h3><p>门数 × 分数 × 科目硬度</p></div>
+          </div>
+          <div class="score-badge" data-badge="ap"><b>0</b><span>分</span></div>
+        </header>
+        <div class="card-body">
+          <div class="rows" data-rows="aps"></div>
+          <button class="add-btn" type="button" data-add="aps">＋ 添加一门 AP</button>
+          <p class="hint">5 分 = 100 分/门，4 分 = 80，3 分 = 55。数量分在 6 门左右封顶，质量比堆数更重要。</p>
+          <div class="manual-row">
+            <label class="switch"><input type="checkbox" data-lock="ap"><span></span>手动锁定</label>
+            <input class="manual-range" type="range" min="0" max="100" step="1" data-manual="ap" disabled aria-label="手动设置AP分数">
+            <output data-manual-out="ap">—</output>
+          </div>
+        </div>
+        <footer class="card-foot"><span class="advice" data-advice="ap">填一下，马上算。</span></footer>
+      </article>
+
+      <!-- 竞赛 -->
+      <article class="card dim-card" data-dim="comp" id="card-comp">
+        <header class="card-head">
+          <div class="card-title">
+            <span class="dim-no">04</span>
+            <div><h3>竞赛</h3><p>赛事层级 × 奖项档次</p></div>
+          </div>
+          <div class="score-badge" data-badge="comp"><b>0</b><span>分</span></div>
+        </header>
+        <div class="card-body">
+          <div class="rows" data-rows="comps"></div>
+          <button class="add-btn" type="button" data-add="comps">＋ 添加一个竞赛</button>
+          <p class="hint">不再穷举赛事：先选学科，再选档位（S+ 到 E），分值自动填。觉得不准，直接改分值。</p>
+          <div class="manual-row">
+            <label class="switch"><input type="checkbox" data-lock="comp"><span></span>手动锁定</label>
+            <input class="manual-range" type="range" min="0" max="100" step="1" data-manual="comp" disabled aria-label="手动设置竞赛分数">
+            <output data-manual-out="comp">—</output>
+          </div>
+        </div>
+        <footer class="card-foot"><span class="advice" data-advice="comp">填一下，马上算。</span></footer>
+      </article>
+
+      <!-- 活动 -->
+      <article class="card dim-card wide" data-dim="act" id="card-act">
+        <header class="card-head">
+          <div class="card-title">
+            <span class="dim-no">05</span>
+            <div><h3>活动</h3><p>级别 × 类型 × 角色 × 年限 × 影响力</p></div>
+          </div>
+          <div class="score-badge" data-badge="act"><b>0</b><span>分</span></div>
+        </header>
+        <div class="card-body">
+          <div class="rows" data-rows="acts"></div>
+          <button class="add-btn" type="button" data-add="acts">＋ 添加一项活动</button>
+          <p class="hint">招生官看的是「持续 + 领导力 + 影响力」。3 年以上的深度投入，比 8 个一周社团值钱得多。</p>
+          <div class="manual-row">
+            <label class="switch"><input type="checkbox" data-lock="act"><span></span>手动锁定</label>
+            <input class="manual-range" type="range" min="0" max="100" step="1" data-manual="act" disabled aria-label="手动设置活动分数">
+            <output data-manual-out="act">—</output>
+          </div>
+        </div>
+        <footer class="card-foot"><span class="advice" data-advice="act">填一下，马上算。</span></footer>
+      </article>
+
+      <!-- 材料 -->
+      <article class="card dim-card wide" data-dim="essay" id="card-essay">
+        <header class="card-head">
+          <div class="card-title">
+            <span class="dim-no">06</span>
+            <div><h3>材料</h3><p>推荐信 · 面试 · 文书，没写文书也能先算</p></div>
+          </div>
+          <div class="score-badge" data-badge="essay"><b>0</b><span>分</span></div>
+        </header>
+        <div class="card-body">
+          <p class="mat-note">很多申请者到这个阶段还没有文书。这一维先由推荐信和面试撑起来，文书写好后自动加权进来。</p>
+
+          <div class="mat-block">
+            <div class="mat-head"><h4>推荐信</h4><span>找了解你的人，而不是头衔最大的人</span></div>
+            <div class="sliders" data-sliders="rec"></div>
+          </div>
+
+          <div class="mat-block">
+            <div class="mat-head"><h4>面试 / 补充材料</h4><span>InitialView、Vericant、校友面试、作品集</span></div>
+            <div class="sliders" data-sliders="interview"></div>
+            <label class="switch mat-switch"><input type="checkbox" data-third><span></span>已参加第三方面试或提交补充材料</label>
+          </div>
+
+          <div class="mat-block">
+            <div class="mat-head"><h4>文书</h4><span>还没写就留空，不扣分</span></div>
+            <div class="sliders" data-sliders="essay"></div>
+          </div>
+
+          <div class="essay-mini">
+            <label class="field">
+              <span>把文书粘进来，做一次免费体检（可选）</span>
+              <textarea data-bind="essay.text" rows="4" placeholder="Paste your personal statement here… 中文或英文都可以。"></textarea>
+            </label>
+            <div class="essay-mini-actions">
+              <button class="btn ghost small" type="button" id="btnQuickCheck">体检这段文字</button>
+              <span class="hint" id="quickCheckOut">体检会看具体细节、陈词滥调、反思深度和节奏。</span>
+            </div>
+          </div>
+          <div class="manual-row">
+            <label class="switch"><input type="checkbox" data-lock="essay"><span></span>手动锁定</label>
+            <input class="manual-range" type="range" min="0" max="100" step="1" data-manual="essay" disabled aria-label="手动设置材料分数">
+            <output data-manual-out="essay">—</output>
+          </div>
+        </div>
+        <footer class="card-foot"><span class="advice" data-advice="essay">填一下，马上算。</span></footer>
+      </article>
+
+      <!-- 背景加成 -->
+      <article class="card dim-card wide bg-card" id="card-bg">
+        <header class="card-head">
+          <div class="card-title">
+            <span class="dim-no">＋</span>
+            <div><h3>背景加成</h3><p>不影响六维，只影响学校匹配与录取概率</p></div>
+          </div>
+          <div class="bg-total" id="bgTotal">+0</div>
+        </header>
+        <div class="card-body">
+          <div class="bg-grid" id="bgGrid"></div>
+          <p class="hint">绿卡 / 公民按 domestic 池处理；美高提升熟悉度；助学金需求只对国际生且非 need-blind 的学校扣分。不同学校对国际 / 中国申请者的友好度已经写进各自的模型。</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 4. 选校 -->
+  <section class="section" id="sec-schools">
+    <header class="sec-head">
+      <div>
+        <p class="sec-kicker">02 / MATCH</p>
+        <h2>你能去哪，以及为什么</h2>
+        <p class="sec-sub">把 <b id="schoolCount">68</b> 所美国大学的「招生画像」和你的六维做加权距离——覆盖 QS 前 100 里的美国校和常见强校。差额越小，匹配度越高；录取率决定该把它放在冲刺还是保底。UC 系不看你 SAT，模型会自动扣掉这一项。</p>
+      </div>
+      <div class="sec-tools">
+        <div class="seg" id="typeFilter" role="group" aria-label="学校类型筛选">
+          <button class="on" data-type="all" type="button">全部</button>
+          <button data-type="private" type="button">私立</button>
+          <button data-type="public" type="button">公立</button>
+          <button data-type="tech" type="button">理工强校</button>
+        </div>
+        <label class="search"><input id="schoolSearch" type="search" placeholder="搜学校 / 关键词" autocomplete="off"></label>
+      </div>
+    </header>
+
+    <div class="shortlist card" id="shortlist"></div>
+    <div class="dream-strip" id="dreamStrip"></div>
+
+    <div class="school-groups">
+      <section class="school-group" data-tier="safe">
+        <h3><span class="tier-dot safe"></span>保底 · Safety<em id="count-safe">0</em></h3>
+        <p class="group-note">你的六维明显覆盖它们的画像。仍然要确认文书和补充材料没有硬伤。</p>
+        <div class="school-grid" id="grid-safe"></div>
+      </section>
+      <section class="school-group" data-tier="match">
+        <h3><span class="tier-dot match"></span>匹配 · Target<em id="count-match">0</em></h3>
+        <p class="group-note">你和这所学校的中位录取者长得差不多，胜负在文书和细节。</p>
+        <div class="school-grid" id="grid-match"></div>
+      </section>
+      <section class="school-group" data-tier="reach">
+        <h3><span class="tier-dot reach"></span>冲刺 · Reach<em id="count-reach">0</em></h3>
+        <p class="group-note">有一到两个维度还差一口气，或者它本身就只录个位数比例。</p>
+        <div class="school-grid" id="grid-reach"></div>
+      </section>
+      <section class="school-group" data-tier="dream">
+        <h3><span class="tier-dot dream"></span>梦校 · Lottery<em id="count-dream">0</em></h3>
+        <p class="group-note">差距较大，属于“梦一下不要钱”。想认真冲，先把最短的那块板补上。</p>
+        <div class="school-grid" id="grid-dream"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- 5. 毕业生对照 -->
+  <section class="section" id="sec-cohort">
+    <header class="sec-head">
+      <div>
+        <p class="sec-kicker">03 / COHORT</p>
+        <h2>和历届毕业生站在一起</h2>
+        <p class="sec-sub">把某一届毕业生的六维平均叠进你的雷达图：你比他们强在哪、差在哪，以及那一届最后都去了哪里。</p>
+      </div>
+      <div class="sec-tools">
+        <button class="btn ghost small" id="btnAddCohort" type="button">＋ 新增一届</button>
+        <button class="btn ghost small" id="btnEditCohort" type="button">编辑本届数据</button>
+      </div>
+    </header>
+
+    <div class="year-bar" id="yearBar" role="group" aria-label="选择毕业生届别"></div>
+
+    <div class="cohort-layout">
+      <article class="card cohort-main" id="cohortMain"></article>
+      <aside class="card cohort-side" id="cohortSide"></aside>
+    </div>
+
+    <p class="cohort-note">数据可编辑：把你们学校升学榜上的真实平均分填进来，这个对比才有意义。点「编辑本届数据」修改，全部存在本机。</p>
+  </section>
+
+  <!-- 6. 文书工坊 -->
+  <section class="section" id="sec-essay">
+    <header class="sec-head">
+      <div>
+        <p class="sec-kicker">04 / ESSAY</p>
+        <h2>文书工坊：从素材到第一稿</h2>
+        <p class="sec-sub">用你刚填的活动和竞赛当原料，生成故事骨架、匹配题目，再给文字做一次体检。它不会替你写，但能让你不再对着空白页发呆。</p>
+      </div>
+    </header>
+
+    <div class="workshop">
+      <div class="ws-tabs" role="tablist" aria-label="文书工具">
+        <button class="on" data-ws="prompts" role="tab" type="button">题目库</button>
+        <button data-ws="outline" role="tab" type="button">故事骨架</button>
+        <button data-ws="check" role="tab" type="button">文书体检</button>
+        <button data-ws="rubric" role="tab" type="button">评分标准</button>
+      </div>
+
+      <div class="ws-panel on" data-panel="prompts">
+        <div class="prompt-grid" id="promptGrid"></div>
+      </div>
+
+      <div class="ws-panel" data-panel="outline">
+        <div class="outline-head">
+          <p>根据你最强的素材，自动生成三条故事线。每段都标了建议字数，先写骨架，再填血肉。</p>
+          <button class="btn ghost small" type="button" id="btnRegenOutline">重新生成</button>
+        </div>
+        <div class="outline-grid" id="outlineGrid"></div>
+      </div>
+
+      <div class="ws-panel" data-panel="check">
+        <div class="check-layout">
+          <div class="check-input card">
+            <label class="field">
+              <span>粘贴你的文书草稿</span>
+              <textarea id="essayDraft" rows="14" placeholder="中文或英文都行。越完整，体检越准。建议 400 词以上。"></textarea>
+            </label>
+            <div class="check-actions">
+              <button class="btn primary" type="button" id="btnCheck">开始体检</button>
+              <button class="btn ghost" type="button" id="btnLoadSampleEssay">塞一段反面教材</button>
+            </div>
+            <p class="hint">体检是启发式规则，不是招生官。它只负责指出“太抽象 / 太老套 / 没有你”的地方。</p>
+          </div>
+          <div class="check-result" id="checkResult">
+            <div class="empty-state">
+              <span>◎</span>
+              <p>还没有体检结果。<br>把你写的第一段粘进去试试。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ws-panel" data-panel="rubric">
+        <div class="essay-rubric" id="essayRubric"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. 评分表 -->
+  <section class="section" id="sec-rubric">
+    <header class="sec-head">
+      <div>
+        <p class="sec-kicker">05 / RULES</p>
+        <h2>评分表：每一分从哪来</h2>
+        <p class="sec-sub">这是整套模型的规则书。觉得不合理？自己加赛事、改分值，模型会立刻按你的规则重算。</p>
+      </div>
+      <div class="sec-tools">
+        <button class="btn ghost small" id="btnAddRubric" type="button">＋ 自定义条目</button>
+      </div>
+    </header>
+
+    <div class="rubric-grid">
+      <article class="card rubric-card">
+        <h3>竞赛档位表 <small>每个档位给每个学科一个例子；选学科看对照</small></h3>
+        <div class="comp-tabs" id="compSubjectTabs" role="group" aria-label="竞赛学科"></div>
+        <div class="table-wrap"><table class="rt" id="compRubricTable"></table></div>
+      </article>
+
+      <article class="card rubric-card">
+        <h3>活动档位表 <small>直接选档位，分值可以手改</small></h3>
+        <div class="table-wrap"><table class="rt" id="actRubricTable"></table></div>
+      </article>
+
+      <article class="card rubric-card">
+        <h3>GPA 换算 <small>先归一化到 0–100，再叠加难度 / 排名 / 趋势</small></h3>
+        <div class="table-wrap"><table class="rt" id="gpaRubricTable"></table></div>
+      </article>
+
+      <article class="card rubric-card">
+        <h3>标化 &amp; AP 换算 <small>分段线性，超过 1550 之后收益递减</small></h3>
+        <div class="table-wrap"><table class="rt" id="testRubricTable"></table></div>
+      </article>
+    </div>
+
+    <div class="card custom-card">
+      <div class="custom-head">
+        <div>
+          <h3>我的自定义评分表</h3>
+          <p class="hint">加进去的赛事会出现在「竞赛」下拉框，活动类型会出现在「活动」里。只存在这台设备上。</p>
+        </div>
+        <form id="customForm" class="custom-form">
+          <input name="name" type="text" maxlength="40" placeholder="条目名称，如：HIMCM 数学建模" required>
+          <select name="kind">
+            <option value="comp">竞赛</option>
+            <option value="act">活动</option>
+          </select>
+          <input name="pts" type="number" min="1" max="100" step="1" placeholder="分值" required>
+          <button class="btn primary small" type="submit">加入评分表</button>
+        </form>
+      </div>
+      <div id="customList" class="custom-list"></div>
+    </div>
+
+    <div class="card formula-card">
+      <h3>整套模型怎么算</h3>
+      <ol class="formula-list" id="formulaList"></ol>
+    </div>
+  </section>
+
+  <!-- 6. 更新日志 -->
+  <section class="section changelog" id="sec-changelog">
+    <header class="sec-head">
+      <div>
+        <p class="sec-kicker">06 / CHANGELOG</p>
+        <h2>更新日志</h2>
+        <p class="sec-sub">当前版本 <b id="logVersion" class="js-version">v1.1.0</b>。每次改动都记在这里，最上面是最新一版。</p>
+      </div>
+    </header>
+    <div class="log" id="changelogList"></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-brand">AdmitLab · 六维录取实验室 <span class="ver-pill js-version">v1.1.0</span></div>
+  <p>一个娱乐向的自我测评玩具：分数是编的，大学是真的，你的故事也是真的。别让任何一个模型替你决定去哪。</p>
+  <div class="foot-meta"><span>数据存本地 · 不上传</span><span>录取率参考 2024–25 公开数据，仅作氛围</span><a href="#sec-changelog">更新日志</a></div>
+</footer>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-backdrop" data-close="modal"></div>
+  <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-x" type="button" data-close="modal" aria-label="关闭">×</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="sample-pop" id="samplePop" hidden>
+  <p>载入一份示例数据：</p>
+  <button type="button" data-sample="t30">T30 申请者 <small>成绩不错，活动偏弱</small></button>
+  <button type="button" data-sample="ivy">藤校卷王 <small>六边形战士</small></button>
+  <button type="button" data-sample="stem">竞赛偏科天才 <small>数学/物理怪物</small></button>
+  <button type="button" data-sample="humanities">文科文艺青年 <small>主编 / 辩论 / 写作</small></button>
+  <button type="button" data-sample="average">普通高中生 <small>大多数人的样子</small></button>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/data.js" defer></script>
+<script src="js/core.js" defer></script>
+<script src="js/radar.js" defer></script>
+<script src="js/app.js" defer></script>
+</body>
+</html>

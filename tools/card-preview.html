@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><title>分享卡预览</title>
+<style>html,body{margin:0;background:#04060b}canvas{display:block;margin:0 auto}</style>
+</head>
+<body>
+<script src="../js/data.js"></script>
+<script src="../js/core.js"></script>
+<script src="../js/radar.js"></script>
+<script>
+  (function () {
+    const D = window.ADMIT_DATA, C = window.ADMIT_CORE, R = window.ADMIT_RADAR;
+    const st = C.loadSample('t30');
+    const r = C.computeScores(st.profile, {});
+    const scores = r.scores;
+    const power = C.powerOf(scores);
+    const cohort = st.cohorts[0];
+    const cohortValues = {};
+    D.DIMS.forEach(function (d, i) { cohortValues[d.key] = cohort.dims[i]; });
+    const deltas = {};
+    D.DIMS.forEach(function (d, i) { deltas[d.key] = Math.round(scores[d.key] - cohort.dims[i]); });
+
+    const all = C.matchAll(scores);
+    const byTier = function (t) { return all.filter(function (r) { return r.tier === t; })[0]; };
+    const picks = ['reach', 'match', 'safe'].map(byTier).filter(Boolean);
+
+    const canvas = R.exportCard({
+      title: '我的六维录取画像',
+      persona: C.personaOf(scores),
+      scores: scores,
+      power: Math.round(power * 10) / 10,
+      rating: C.ratingOf(power),
+      schools: picks,
+      cohortValues: cohortValues,
+      cohortLabel: cohort.year + ' 届平均',
+      deltas: deltas,
+      date: '2026/11/12'
+    });
+    document.body.appendChild(canvas);
+  })();
+</script>
+</body>
+</html>
