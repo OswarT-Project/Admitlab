@@ -112,6 +112,7 @@
       customRubric: [],
       snapshots: [],
       tasks: [],
+      cases: [],
       ui: {
         overlayYear: null, overlaySchools: [], typeFilter: 'all', search: '',
         activeCohort: D.COHORTS[0].year, compSubject: 'math'
@@ -905,7 +906,7 @@
     }
     if (Array.isArray(raw.cohorts) && raw.cohorts.length) {
       st.cohorts = raw.cohorts.map((c) => ({
-        year: +c.year || 0, count: +c.count || 0,
+        year: +c.year || 0, count: +c.count || 0, demo: !!c.demo,
         dims: (c.dims || []).map((v) => clamp(+v || 0, 0, 100)),
         destinations: Array.isArray(c.destinations) ? c.destinations.filter((x) => x && x.id) : [],
         note: c.note || ''
@@ -927,6 +928,17 @@
       st.tasks = raw.tasks.filter((t) => t && t.id && t.text).slice(0, 20).map((t) => ({
         id: String(t.id), dim: t.dim || '', text: String(t.text),
         gain: +t.gain || 0, effort: t.effort || '', done: !!t.done
+      }));
+    }
+    if (Array.isArray(raw.cases)) {
+      st.cases = raw.cases.filter((c) => c && c.schoolId && c.scores).slice(0, 30).map((c) => ({
+        id: String(c.id || 'c' + Date.now()),
+        schoolId: String(c.schoolId),
+        alias: c.alias || '匿名案例',
+        year: c.year || '',
+        source: c.source || '',
+        scores: c.scores,
+        createdAt: +c.createdAt || Date.now()
       }));
     }
     if (raw.ui) {
@@ -969,6 +981,50 @@
     return s;
   }
 
+  /* ---------------- 去向推测 / 案例相似度 ---------------- */
+  function destStats(sample) {
+    const us = sample.us || {};
+    const p10 = us.top10 ? us.top10.share : 0;
+    const p30 = us.top30 ? us.top30.share : 0;
+    const p50 = us.top50 ? us.top50.share : 0;
+    const below = Math.max(0, 1 - p50);
+    const index = p10 * 100 + Math.max(0, p30 - p10) * 85 + Math.max(0, p50 - p30) * 70 + below * 55;
+    const margin = 4.5;
+    return {
+      index: round(index, 1),
+      low: round(Math.max(0, index - margin), 1),
+      high: round(Math.min(100, index + margin), 1),
+      usRows: [
+        { key: 'top10', label: '藤校 & Top10', share: p10, offers: us.top10 && us.top10.offers, students: us.top10 && us.top10.students },
+        { key: 'top30', label: 'Top30', share: p30, offers: us.top30 && us.top30.offers },
+        { key: 'top50', label: 'Top50', share: p50, offers: us.top50 && us.top50.offers }
+      ],
+      uk: sample.uk || null,
+      hk: sample.hk || null
+    };
+  }
+
+  function similarityOf(userScores, caseScores) {
+    let sum = 0, w = 0;
+    const diffs = [];
+    DIMS.forEach((d) => {
+      const a = userScores[d.key];
+      const b = caseScores[d.key];
+      if (a == null || b == null) return;
+      const wd = D.GLOBAL_WEIGHTS[d.key];
+      sum += Math.abs(a - b) * wd;
+      w += wd;
+      diffs.push({ key: d.key, name: d.name, diff: round(Math.abs(a - b), 1), mine: a, theirs: b });
+    });
+    diffs.sort((a, b) => b.diff - a.diff);
+    return {
+      sim: w ? round(Math.max(0, 100 - sum / w), 1) : 0,
+      diffs,
+      farthest: diffs[0] || null,
+      closest: diffs.length ? diffs[diffs.length - 1] : null
+    };
+  }
+
   const API = {
     clamp, round, mean, sum, clone, isNum, interp, byId, shortName, keywordsFor, factsFor,
     defaultState, blankProfile, blankEssay, blankBg, emptyEstimates, sanitize, loadSample,
@@ -977,6 +1033,7 @@
     actTier, actName, actPoints, actScore,
     computeScores, powerOf, powerRange, ratingOf, personaOf, ROLE_NAMES,
     backgroundFor,
+    destStats, similarityOf,
     matchSchool, matchAll, shortlist, estimateProbability, tierOf, TIER_LABEL,
     cohortPower, cohortStats, cohortById,
     adviceFor, analyzeEssay, buildOutlines, topMaterial,

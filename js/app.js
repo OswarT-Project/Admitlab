@@ -96,6 +96,7 @@
   }
 
   function activeCohort() {
+    if (!D.COHORT_ENABLED) return null;
     return C.cohortById(state, state.ui.activeCohort) || (state.cohorts || [])[0] || null;
   }
 
@@ -542,8 +543,8 @@
     if (cohort && view.power > 5) {
       const st = C.cohortStats(cohort, view.scores);
       const up = st.delta >= 0;
-      chip.innerHTML = '<span class="' + (up ? 'up' : 'down') + '">vs ' + cohort.year + ' 届平均 ' +
-        (up ? '+' : '') + st.delta + '</span><span>届内估算前 ' + st.top + '%</span>';
+      chip.innerHTML = '<span class="' + (up ? 'up' : 'down') + '">vs ' + cohort.year + ' 届平均' +
+        (cohort.demo ? '（示例）' : '') + ' ' + (up ? '+' : '') + st.delta + '</span><span>届内估算前 ' + st.top + '%</span>';
     } else {
       chip.innerHTML = '';
     }
@@ -583,7 +584,7 @@
 
   function renderRadar() {
     const overlays = [];
-    const cohort = C.cohortById(state, state.ui.overlayYear);
+    const cohort = D.COHORT_ENABLED ? C.cohortById(state, state.ui.overlayYear) : null;
     if (cohort) {
       overlays.push({
         values: dimsToObj(cohort.dims), color: '#a78bfa', dash: '6 5', width: '1.7',
@@ -659,6 +660,151 @@
     </button>`;
   }
 
+  /* ======================================================================
+     渲染：去向推测 / 案例
+     ====================================================================== */
+  function renderDest() {
+    const sample = D.DEST_SAMPLES[0];
+    const main = $('#destMain');
+    if (!main || !sample) return;
+    const st = C.destStats(sample);
+    const us = sample.us;
+
+    main.innerHTML = `
+      <div class="dest-title">
+        <div><h3>${esc(sample.school)}</h3>
+          <p>${esc(sample.region)} · ${sample.year} 届 · ${esc(sample.cohort)} 名毕业生 · 美国方向 ${us.applicants} 余人</p></div>
+        <span class="sample-chip">官方喜报</span>
+      </div>
+      <div class="dest-tiers">
+        ${st.usRows.map((r) => `<div class="dt-row">
+          <div class="dt-top"><span>${esc(r.label)}</span><b>${Math.round(r.share * 1000) / 10}%</b>
+            <small>${r.offers ? r.offers + ' 份 offer' : ''}${r.students ? ' · ' + r.students + ' 人' : ''}</small></div>
+          <div class="dt-bar"><i style="width:${r.share * 100}%"></i></div>
+        </div>`).join('')}
+      </div>
+      <div class="dest-uk">
+        <div><span>英国方向</span><b>${sample.uk.oxbridge.students} 人牛剑</b><small>${sample.uk.applicants} 人申英 · 占 ${Math.round(sample.uk.oxbridge.share * 1000) / 10}%</small></div>
+        <div><span>G5</span><b>${Math.round(sample.uk.g5.share * 100)}%</b><small>${sample.uk.g5.offers} 份预录取</small></div>
+        <div><span>香港前三</span><b>${Math.round(sample.hk.top3Share * 100)}%</b><small>${sample.hk.students} 人 · ${sample.hk.offers} 份</small></div>
+      </div>
+      <p class="dest-note">${esc(sample.note)}</p>
+      <p class="dest-src">来源：<a href="${esc(sample.sourceUrl)}" target="_blank" rel="noopener">${esc(sample.sourceName)}</a> · 发布于 ${esc(sample.published)} · offer 数 ≠ 人数（一人可能多 offer）</p>`;
+
+    $('#destSide').innerHTML = `
+      <div class="dest-index">
+        <span>届别水平指数（推测）</span>
+        <b>${st.low}–${st.high}</b>
+        <small>不是个人录取概率，只描述这一届的整体去向结构</small>
+      </div>
+      <ul class="dest-formula">
+        <li>藤校 & Top10 ${Math.round(st.usRows[0].share * 1000) / 10}% × 100</li>
+        <li>Top30 ${Math.round(st.usRows[1].share * 100)}% × 85</li>
+        <li>Top50 ${Math.round(st.usRows[2].share * 100)}% × 70</li>
+        <li>Top50 以外 ${Math.round((1 - st.usRows[2].share) * 1000) / 10}% × 55</li>
+        <li>再加 ±4.5 的口径容差（offer / 人数、年份差异）</li>
+      </ul>
+      <p class="dest-warn">样本只有 1 所（深国交），不能代表整个大湾区；后续可以加学校样本。指数是模型，不是官方评级。</p>`;
+  }
+
+  function renderCases() {
+    const box = $('#caseGrid');
+    if (!box) return;
+    const cases = state.cases || [];
+    if (!cases.length) {
+      box.innerHTML = `<div class="case-empty card">
+        <span>◎</span>
+        <h3>还没有案例</h3>
+        <p>公开案例多为自报、无法核实，所以不预置。你可以录入一个了解的匿名案例（六维 + 录取学校），系统会算它和你的相似度。只存本机。</p>
+        <button class="btn primary small" type="button" data-add-case>添加第一个案例</button>
+      </div>`;
+      return;
+    }
+    box.innerHTML = cases.map((c) => {
+      const school = D.SCHOOLS.find((s) => s.id === c.schoolId);
+      const sim = C.similarityOf(view.scores, c.scores);
+      const tone = sim.sim >= 80 ? 'good' : sim.sim >= 60 ? 'mid' : 'low';
+      const bars = DIMS.map((d) => {
+        const v = c.scores[d.key];
+        return `<i title="${d.name} ${v == null ? '—' : Math.round(v)}" style="height:${v == null ? 2 : Math.max(4, v * 0.3)}px;background:${d.color}"></i>`;
+      }).join('');
+      return `<article class="case-card">
+        <div class="case-top">
+          <div><b>${esc(school ? school.name : '未知学校')}</b><small>${esc(c.alias)}${c.year ? ' · ' + esc(c.year) : ''}</small></div>
+          <div class="case-sim ${tone}"><b>${sim.sim}%</b><span>相似度</span></div>
+        </div>
+        <div class="case-bars">${bars}</div>
+        <p class="case-gaps">${sim.farthest ? '差距最大：' + esc(sim.farthest.name) + ' 差 ' + sim.farthest.diff : '暂无可比维度'}
+          ${sim.closest ? ' · 最接近：' + esc(sim.closest.name) + ' 差 ' + sim.closest.diff : ''}</p>
+        ${c.source ? `<p class="case-src">来源：${esc(c.source)}</p>` : ''}
+        <button class="case-del" type="button" data-case-del="${esc(c.id)}">删除</button>
+      </article>`;
+    }).join('') + `<button class="case-add" type="button" data-add-case>＋ 再加一个案例</button>`;
+  }
+
+  function openCaseForm() {
+    const opts = D.SCHOOLS.slice().sort((a, b) => a.en.localeCompare(b.en)).map((s) =>
+      `<option value="${s.id}">${esc(s.name)}（${esc(s.en)}）</option>`).join('');
+    const fields = DIMS.map((d) => `<label class="field"><span>${d.name}</span>
+      <input type="number" name="s-${d.key}" min="0" max="100" step="1" value="${view.scores[d.key] == null ? 60 : Math.round(view.scores[d.key])}"></label>`).join('');
+    openModal(`
+      <h3 id="modalTitle">添加一个匿名案例</h3>
+      <p class="hint" style="margin-top:6px">只存本机，请不要填真实姓名。案例越具体，相似度越有意义。</p>
+      <form id="caseForm" class="m-form">
+        <div class="field-row" style="margin-top:14px">
+          <label class="field"><span>录取学校</span><select name="schoolId">${opts}</select></label>
+          <label class="field"><span>年份（可选）</span><input type="text" name="year" maxlength="8" placeholder="2025"></label>
+        </div>
+        <label class="field" style="margin-top:10px"><span>匿名代号 / 来源说明</span>
+          <input type="text" name="alias" maxlength="40" placeholder="如：2025 届 A 同学 / 翠鹿公开案例"></label>
+        <div class="case-score-grid">${fields}</div>
+        <div class="m-actions">
+          <button class="btn primary" type="submit">保存案例</button>
+          <button class="btn ghost" type="button" data-close="modal">取消</button>
+        </div>
+      </form>`);
+    $('#caseForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const scores = {};
+      DIMS.forEach((d) => { scores[d.key] = C.clamp(+fd.get('s-' + d.key) || 0, 0, 100); });
+      state.cases = (state.cases || []).concat([{
+        id: 'c' + Date.now(),
+        schoolId: String(fd.get('schoolId')),
+        alias: String(fd.get('alias') || '匿名案例'),
+        year: String(fd.get('year') || ''),
+        source: String(fd.get('alias') || ''),
+        scores,
+        createdAt: Date.now()
+      }]).slice(-30);
+      saveState();
+      closeModal();
+      renderCases();
+      toast('案例已保存到本机');
+    });
+  }
+
+  function renderSources() {
+    const box = $('#sourceList');
+    if (!box) return;
+    const items = [
+      { tag: '官方', name: '深国交 2025 全球本科录取', note: '去向档位与人数 / offer 数据', url: 'https://www.alevel.com.cn/news/3019/' },
+      { tag: '官方', name: 'UC Berkeley 录取画像', note: '加权 GPA 区间、Test-Blind', url: 'https://admissions.berkeley.edu/student-profile/' },
+      { tag: '官方', name: 'UCLA 录取画像', note: '加权 GPA 区间、Test-Blind', url: 'https://admission.ucla.edu/apply/freshman/profile' },
+      { tag: '官方', name: 'MIT 录取画像', note: 'SAT / ACT 区间', url: 'https://mitadmissions.org/apply/process/profile/' },
+      { tag: '官方', name: 'Harvard 录取统计', note: 'SAT / ACT 区间', url: 'https://college.harvard.edu/admissions/admissions-statistics' },
+      { tag: '官方', name: 'Common App 文书题目', note: '主文书 7 题', url: 'https://www.commonapp.org/' },
+      { tag: '官方', name: 'UC PIQ 题目', note: '加州系个人洞察问题', url: 'https://admission.universityofcalifornia.edu/admission-requirements/freshman-requirements/personal-insight-questions.html' },
+      { tag: '估算', name: '68 所大学六维画像 / 录取率', note: '公开数据 + 学校偏好的人工整理，不是官方', url: '' },
+      { tag: '手动', name: '录取案例', note: '由用户在本机录入，未核实', url: '' }
+    ];
+    box.innerHTML = items.map((x) => `<div class="source-item">
+      <span class="source-tag ${x.tag === '官方' ? 'off' : x.tag === '估算' ? 'est' : 'user'}">${x.tag}</span>
+      <div><b>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>` : esc(x.name)}</b>
+        <small>${esc(x.note)}</small></div>
+    </div>`).join('');
+  }
+
   function renderSchools() {
     const countEl = $('#schoolCount');
     if (countEl) countEl.textContent = D.SCHOOLS.length;
@@ -711,9 +857,25 @@
      渲染：毕业生
      ====================================================================== */
   function renderCohort() {
+    const sec = document.getElementById('sec-cohort');
+    if (!D.COHORT_ENABLED) {
+      if (sec) sec.hidden = true;
+      const nav = document.getElementById('nav-cohort');
+      if (nav) nav.hidden = true;
+      return;
+    }
+    if (sec) sec.hidden = false;
     const list = (state.cohorts || []).slice().sort((a, b) => b.year - a.year);
     if (!list.length) return;
     const active = activeCohort() || list[0];
+
+    const demoEl = $('#cohortDemo');
+    if (demoEl) {
+      demoEl.hidden = !active.demo;
+      demoEl.innerHTML = active.demo
+        ? '<b>演示数据</b>　这五届的人数和去向是虚构的，不是任何真实学校。点「编辑本届数据」换成你们学校的升学榜，或直接删掉。'
+        : '';
+    }
 
     $('#yearBar').innerHTML = list.map((c) => `
       <button class="year-chip${c.year === active.year ? ' on' : ''}" type="button" data-cohort="${c.year}">
@@ -746,6 +908,7 @@
     $('#cohortMain').innerHTML = `
       <div class="cohort-title">
         <h3>${active.year} 届毕业生平均</h3>
+        ${active.demo ? '<span class="c-badge demo">演示数据</span>' : ''}
         <span class="c-badge">可编辑</span>
         <span class="c-avg">${active.count} 人 · 平均战力 <b>${st.avg}</b></span>
       </div>
@@ -923,6 +1086,8 @@
     renderAdvice();
     renderRadar();
     renderSchools();
+    renderDest();
+    renderCases();
     renderCohort();
     renderPrompts();
     renderOutlines();
@@ -945,6 +1110,8 @@
 
   function renderOverlayControls() {
     const years = (state.cohorts || []).slice().sort((a, b) => b.year - a.year);
+    const yearCtl = document.getElementById('yearControl');
+    if (yearCtl) yearCtl.hidden = !D.COHORT_ENABLED;
     const ySel = $('#overlayYear');
     ySel.innerHTML = '<option value="">不叠加</option>' + years.map((c) =>
       `<option value="${c.year}">${c.year} 届 · ${c.count} 人</option>`).join('');
@@ -1172,7 +1339,7 @@
         if (id && n > 0) map[id] = (map[id] || 0) + n;
       });
       const destinations = Object.keys(map).map((id) => ({ id, n: map[id] })).sort((a, b) => b.n - a.n);
-      const item = { year, count: count || 1, dims, destinations, note: fd.get('note') || '' };
+      const item = { year, count: count || 1, demo: false, dims, destinations, note: fd.get('note') || '' };
 
       state.cohorts = (state.cohorts || []).filter((x) => x.year !== editingYear && x.year !== year);
       state.cohorts.push(item);
@@ -1510,7 +1677,7 @@
   }
 
   function share() {
-    const cohort = C.cohortById(state, state.ui.overlayYear);
+    const cohort = D.COHORT_ENABLED ? C.cohortById(state, state.ui.overlayYear) : null;
     const cohortValues = cohort ? dimsToObj(cohort.dims) : null;
     const deltas = cohort ? DIMS.reduce((o, d, i) => {
       o[d.key] = view.scores[d.key] == null ? null : Math.round((view.scores[d.key] || 0) - (cohort.dims[i] || 0));
@@ -1569,6 +1736,14 @@
       }
       const unpick = e.target.closest('[data-unpick]');
       if (unpick) { toggleDream(unpick.dataset.unpick); return; }
+      if (e.target.closest('[data-add-case]')) { openCaseForm(); return; }
+      const caseDel = e.target.closest('[data-case-del]');
+      if (caseDel) {
+        state.cases = (state.cases || []).filter((c) => c.id !== caseDel.dataset.caseDel);
+        saveState();
+        renderCases();
+        return;
+      }
       if (e.target.closest('[data-snap-now]')) { saveSnapshot(); return; }
       const snapDel = e.target.closest('[data-snap-del]');
       if (snapDel) {
@@ -1662,6 +1837,7 @@
     $('#btnSave').onclick = () => { saveState(); toast('已保存到这台设备'); };
     $('#btnShare').onclick = share;
     $('#btnSnapshot').onclick = saveSnapshot;
+    $('#btnAddCase').onclick = openCaseForm;
     $('#btnExport').onclick = exportArchive;
     $('#btnImport').onclick = () => $('#importFile').click();
     $('#importFile').onchange = (e) => {
@@ -1759,6 +1935,7 @@
     renderFormula();
     renderRubricTables();
     renderChangelog();
+    renderSources();
     R.mount($('#radar'));
     if (!storageOk) {
       setTimeout(() => toast('浏览器禁用了本地存储，刷新会丢数据；请用「导出存档」备份'), 1400);

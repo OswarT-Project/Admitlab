@@ -491,19 +491,19 @@
 
   /* ---------------- 历届毕业生（可编辑的示例数据） ---------------- */
   const COHORTS = [
-    { year: 2025, count: 46, dims: [86, 84, 78, 62, 74, 70],
+    { year: 2025, count: 46, demo: true, dims: [86, 84, 78, 62, 74, 70],
       destinations: [{ id: 'uiuc', n: 6 }, { id: 'wisconsin', n: 5 }, { id: 'osu', n: 5 }, { id: 'bu', n: 4 }, { id: 'purdue', n: 4 }, { id: 'nyu', n: 3 }, { id: 'uw', n: 2 }, { id: 'northeastern', n: 2 }, { id: 'umich', n: 2 }, { id: 'usc', n: 2 }, { id: 'berkeley', n: 1 }, { id: 'ucla', n: 1 }, { id: 'cmu', n: 1 }, { id: 'cornell', n: 1 } ],
       note: 'AP 体系，平均每人 4.2 门 AP；T30 录取 9 人。' },
-    { year: 2024, count: 44, dims: [85, 83, 76, 60, 73, 69],
+    { year: 2024, count: 44, demo: true, dims: [85, 83, 76, 60, 73, 69],
       destinations: [{ id: 'uiuc', n: 7 }, { id: 'wisconsin', n: 5 }, { id: 'purdue', n: 5 }, { id: 'osu', n: 4 }, { id: 'bu', n: 3 }, { id: 'uw', n: 3 }, { id: 'nyu', n: 2 }, { id: 'northeastern', n: 2 }, { id: 'usc', n: 2 }, { id: 'uci', n: 2 }, { id: 'umich', n: 1 }, { id: 'ucla', n: 1 } ],
       note: '这一届 ED 命中率偏高，NYU 与 BU 各走了 2 人。' },
-    { year: 2023, count: 43, dims: [84, 82, 75, 58, 71, 66],
+    { year: 2023, count: 43, demo: true, dims: [84, 82, 75, 58, 71, 66],
       destinations: [{ id: 'uiuc', n: 6 }, { id: 'wisconsin', n: 6 }, { id: 'purdue', n: 5 }, { id: 'osu', n: 4 }, { id: 'bu', n: 3 }, { id: 'uw', n: 3 }, { id: 'uci', n: 3 }, { id: 'nyu', n: 2 }, { id: 'umich', n: 1 }, { id: 'northeastern', n: 1 } ],
       note: '标化平均 1460，AP 平均 3.8 门。' },
-    { year: 2022, count: 41, dims: [83, 81, 73, 56, 70, 65],
+    { year: 2022, count: 41, demo: true, dims: [83, 81, 73, 56, 70, 65],
       destinations: [{ id: 'wisconsin', n: 6 }, { id: 'uiuc', n: 5 }, { id: 'osu', n: 5 }, { id: 'purdue', n: 4 }, { id: 'uw', n: 4 }, { id: 'uci', n: 3 }, { id: 'bu', n: 2 }, { id: 'nyu', n: 2 }, { id: 'asu', n: 2 } ],
       note: '疫情后恢复正常申请，加州系录取明显收紧。' },
-    { year: 2021, count: 39, dims: [82, 80, 72, 55, 68, 63],
+    { year: 2021, count: 39, demo: true, dims: [82, 80, 72, 55, 68, 63],
       destinations: [{ id: 'wisconsin', n: 5 }, { id: 'osu', n: 5 }, { id: 'uiuc', n: 4 }, { id: 'purdue', n: 4 }, { id: 'uw', n: 4 }, { id: 'uci', n: 3 }, { id: 'bu', n: 2 }, { id: 'asu', n: 2 }, { id: 'nyu', n: 1 } ],
       note: 'Test-Optional 第一年，标化提交率只有 6 成。' }
   ];
@@ -704,8 +704,36 @@
   };
 
   /* ---------------- 版本与更新日志 ---------------- */
-  const VERSION = '1.1.0';
+  /* 毕业生对照开关：拿到真实学校数据前先关闭，代码与示例数据保留 */
+  const COHORT_ENABLED = false;
+
+  const VERSION = '1.3.0';
   const CHANGELOG = [
+    {
+      version: '1.3.0', date: '2026-11-24', title: '去向推测与案例相似度',
+      items: [
+        '新增「去向推测」：把深国交 2025 官方喜报按藤校 & Top10 / Top30 / Top50 分档，并给出届别水平区间',
+        '只做档位分布与区间推测，不假装知道每个学生的六维；目前只有 1 所样本，暂不做大湾区平均',
+        '新增「录取案例」：可手动录入匿名案例，计算与你六维的相似度和逐维差距（只存本机）',
+        '新增「数据来源」区块，列官方链接与口径说明'
+      ]
+    },
+    {
+      version: '1.2.0', date: '2026-11-24', title: '暂时关闭毕业生对照',
+      items: [
+        '隐藏「毕业生」入口、年度对比和雷达届别图层：公开数据只有去向 / offer 数，没有六维均分',
+        '代码和示例数据保留在 data.js，拿到真实升学数据后把 COHORT_ENABLED 改为 true 即可恢复',
+        '首页不再显示「vs 某届平均」的示例对比'
+      ]
+    },
+    {
+      version: '1.1.1', date: '2026-11-24', title: '数据来源标注',
+      items: [
+        '毕业生五届数据明确标注为「虚构演示数据」，不是任何真实学校',
+        '新增数据来源说明：哪些是官方数据、哪些是模型估算、哪些是示例',
+        '编辑或新增一届后会自动去掉「演示数据」标记'
+      ]
+    },
     {
       version: '1.1.0', date: '2026-11-24', title: '成长快照与下一步',
       items: [
@@ -743,6 +771,43 @@
     }
   ];
 
+  /* ---------------- 去向样本与档位 ----------------
+     只放可核对来源的官方喜报；offer 数 ≠ 人数，页面必须标注口径。 */
+  const DEST_TIERS = [
+    { key: 'top10', label: '藤校 & Top10', weight: 100, color: '#fbbf24' },
+    { key: 'top30', label: 'Top30', weight: 85, color: '#7dd3fc' },
+    { key: 'top50', label: 'Top50', weight: 70, color: '#6ee7b7' },
+    { key: 'below50', label: 'Top50 以外', weight: 55, color: '#64708a' }
+  ];
+
+  const DEST_SAMPLES = [
+    {
+      id: 'scie-2025',
+      school: '深圳国际交流书院（深国交）',
+      short: '深国交',
+      region: '深圳 · 大湾区',
+      year: 2025,
+      cohort: '450+',
+      published: '2025-05-16',
+      sourceName: '深国交官网《英美全能｜2025 深国交全球本科录取》',
+      sourceUrl: 'https://www.alevel.com.cn/news/3019/',
+      us: {
+        applicants: 210,
+        top10: { students: 17, offers: 18, share: 17 / 210 },
+        top30: { offers: 254, share: 0.65 },
+        top50: { offers: 666, share: 0.95 }
+      },
+      uk: {
+        applicants: 330,
+        oxbridge: { students: 41, share: 41 / 330 },
+        g5: { offers: 409, share: 0.70 },
+        top10: { offers: 859, share: 0.95 }
+      },
+      hk: { students: 77, top3Share: 0.95, offers: 97 },
+      note: '官方口径：截至 2025-05-15，450 余名毕业生获 2000 多份录取；美国方向 210 余人，17 名同学获 18 枚藤校 & Top10，65% 获 Top30，95% 获 Top50。'
+    }
+  ];
+
   /* ---------------- 官方录取画像（约值，以官方页面为准） ----------------
      来自各校 Common Data Set / UC 官方 admissions profile；
      和 SCHOOLS.dims 的六维模型画像分开，不混用。 */
@@ -772,7 +837,8 @@
     GPA_RIGOR, GPA_RANK, GPA_TREND,
     ESSAY_CHECKS, REC_CHECKS, INTERVIEW_CHECKS, MATERIAL_WEIGHTS,
     BG_FACTORS, SCHOOL_INTL, NEED_BLIND_INTL, D1_SCHOOLS, SCHOOL_KEYWORDS, SCHOOL_FACTS,
-    VERSION, CHANGELOG,
+    DEST_TIERS, DEST_SAMPLES,
+    VERSION, CHANGELOG, COHORT_ENABLED,
     SCHOOLS, COHORTS, PROMPTS, SAMPLES
   };
 })(typeof window !== 'undefined' ? window : globalThis);

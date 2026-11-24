@@ -17,14 +17,15 @@
       <svg viewBox="0 0 40 40"><path d="M20 4 34 12v16L20 36 6 28V12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="20" cy="20" r="3.4" fill="currentColor"/><path d="M20 6v10M20 24v10M8 13l9 5M32 13l-9 5M8 27l9-5M32 27l-9-5" stroke="currentColor" stroke-width="1.1" opacity=".55"/></svg>
     </span>
     <span class="brand-text"><b>AdmitLab</b><small>六维录取实验室</small></span>
-    <span class="ver-pill js-version">v1.1.0</span>
+    <span class="ver-pill js-version">v1.3.0</span>
   </a>
   <nav class="topnav" aria-label="页面导航">
     <a href="#sec-dash" class="on">驾驶舱</a>
     <a href="#sec-growth">成长</a>
     <a href="#sec-input">录入</a>
     <a href="#sec-schools">选校</a>
-    <a href="#sec-cohort">毕业生</a>
+    <a href="#sec-dest">去向</a>
+    <a href="#sec-cohort" id="nav-cohort">毕业生</a>
     <a href="#sec-essay">文书工坊</a>
     <a href="#sec-rubric">评分表</a>
   </nav>
@@ -72,7 +73,7 @@
         <div class="radar-head">
           <span>六维雷达</span>
           <div class="radar-controls">
-            <label class="mini-select">届别
+            <label class="mini-select" id="yearControl">届别
               <select id="overlayYear" aria-label="叠加哪一届毕业生平均"></select>
             </label>
             <div class="pick-wrap">
@@ -434,6 +435,7 @@
       </div>
     </header>
 
+    <div class="cohort-demo" id="cohortDemo" hidden></div>
     <div class="year-bar" id="yearBar" role="group" aria-label="选择毕业生届别"></div>
 
     <div class="cohort-layout">
@@ -442,6 +444,32 @@
     </div>
 
     <p class="cohort-note">数据可编辑：把你们学校升学榜上的真实平均分填进来，这个对比才有意义。点「编辑本届数据」修改，全部存在本机。</p>
+  </section>
+
+  <!-- 5. 去向推测 -->
+  <section class="section" id="sec-dest">
+    <header class="sec-head">
+      <div>
+        <p class="sec-kicker">03 / DESTINATION</p>
+        <h2>去向推测：喜报能说明什么</h2>
+        <p class="sec-sub">只按录取档位分布做区间推测，不假装知道每个学生的六维。目前只有 1 所官方样本，暂不做大湾区平均。</p>
+      </div>
+      <div class="sec-tools"><span class="sample-chip">深圳 · 大湾区 · 1 所样本</span></div>
+    </header>
+
+    <div class="dest-grid">
+      <article class="card dest-main" id="destMain"></article>
+      <aside class="card dest-side" id="destSide"></aside>
+    </div>
+
+    <div class="case-head">
+      <div>
+        <h3>录取案例相似度</h3>
+        <p>公开案例多为自报、无法核实，所以不预置。你可以手动录入匿名案例，只存本机。</p>
+      </div>
+      <button class="btn primary small" id="btnAddCase" type="button">＋ 添加案例</button>
+    </div>
+    <div class="case-grid" id="caseGrid"></div>
   </section>
 
   <!-- 6. 文书工坊 -->
@@ -563,13 +591,25 @@
     </div>
   </section>
 
-  <!-- 6. 更新日志 -->
+  <!-- 7. 数据来源 -->
+  <section class="section sources" id="sec-sources">
+    <header class="sec-head">
+      <div>
+        <p class="sec-kicker">SOURCES / 数据来源</p>
+        <h2>每个数字从哪来</h2>
+        <p class="sec-sub">官方数据、模型估算、手动录入分开标注；案例不预置，避免把自报信息当成事实。</p>
+      </div>
+    </header>
+    <div class="source-list" id="sourceList"></div>
+  </section>
+
+  <!-- 8. 更新日志 -->
   <section class="section changelog" id="sec-changelog">
     <header class="sec-head">
       <div>
-        <p class="sec-kicker">06 / CHANGELOG</p>
+        <p class="sec-kicker">07 / CHANGELOG</p>
         <h2>更新日志</h2>
-        <p class="sec-sub">当前版本 <b id="logVersion" class="js-version">v1.1.0</b>。每次改动都记在这里，最上面是最新一版。</p>
+        <p class="sec-sub">当前版本 <b id="logVersion" class="js-version">v1.3.0</b>。每次改动都记在这里，最上面是最新一版。</p>
       </div>
     </header>
     <div class="log" id="changelogList"></div>
@@ -577,7 +617,7 @@
 </main>
 
 <footer class="foot">
-  <div class="foot-brand">AdmitLab · 六维录取实验室 <span class="ver-pill js-version">v1.1.0</span></div>
+  <div class="foot-brand">AdmitLab · 六维录取实验室 <span class="ver-pill js-version">v1.3.0</span></div>
   <p>一个娱乐向的自我测评玩具：分数是编的，大学是真的，你的故事也是真的。别让任何一个模型替你决定去哪。</p>
   <div class="foot-meta"><span>数据存本地 · 不上传</span><span>录取率参考 2024–25 公开数据，仅作氛围</span><a href="#sec-changelog">更新日志</a></div>
 </footer>

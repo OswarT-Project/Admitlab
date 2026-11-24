@@ -127,6 +127,15 @@ ok(C.keywordsFor(D.SCHOOLS.find((s) => s.id === 'mit')).indexOf('工程') >= 0, 
 const noKw = D.SCHOOLS.filter((s) => C.keywordsFor(s).length < 4);
 ok(noKw.length === 0, '每所学校至少 4 个关键词' + (noKw.length ? '（缺：' + noKw.map((s) => s.id).join(',') + '）' : ''));
 
+console.log('\n== 去向推测 / 案例相似度 ==');
+const ds = C.destStats(D.DEST_SAMPLES[0]);
+console.log('  深国交 2025 指数 ' + ds.low + '–' + ds.high + '（中值 ' + ds.index + '）');
+ok(ds.low < ds.high && ds.index >= ds.low && ds.index <= ds.high, '届别指数区间合理');
+ok(ds.usRows[0].share > 0 && ds.usRows[2].share > ds.usRows[0].share, '美国档位比例递增');
+const sim = C.similarityOf(r0.scores, Object.assign({}, r0.scores, { comp: Math.max(0, (r0.scores.comp || 0) - 20) }));
+ok(sim.sim > 0 && sim.sim < 100, '相似度在 0–100 之间');
+ok(sim.farthest && sim.farthest.key === 'comp', '差距最大的维度识别正确');
+
 console.log('\n== 手动锁定 ==');
 const manual = C.computeScores(base.profile, { gpa: 100 });
 ok(manual.scores.gpa === 100 && manual.locked.gpa === true, '手动锁定生效');
@@ -170,6 +179,7 @@ ok(round.profile.aps.length === st.profile.aps.length, '存档往返不丢数据
 ok(round.cohorts.length === st.cohorts.length, '毕业生数据保留');
 ok(round.snapshots.length === 1 && round.snapshots[0].power === 82.4, '快照保留');
 ok(round.tasks.length === 1 && round.tasks[0].text.indexOf('SAT') >= 0, '下一步清单保留');
+ok(round.cohorts[0].demo === true, '演示数据标记保留');
 
 console.log('\n' + (fails ? 'FAILED: ' + fails : 'ALL PASS') + '\n');
 process.exit(fails ? 1 : 0);

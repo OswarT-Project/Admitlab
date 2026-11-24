@@ -59,7 +59,7 @@ async function main() {
     ok('文书六滑块', $$('[data-sliders="essay"] input[type=range]').length === 6, $$('[data-sliders="essay"] input[type=range]').length);
     ok('推荐信四滑块', $$('[data-sliders="rec"] input[type=range]').length === 4, $$('[data-sliders="rec"] input[type=range]').length);
     ok('面试两滑块', $$('[data-sliders="interview"] input[type=range]').length === 2, $$('[data-sliders="interview"] input[type=range]').length);
-    ok('五年毕业生数据', $$('.year-chip').length === 5, $$('.year-chip').length);
+    ok('毕业生年份已隐藏', $$('.year-chip').length === 0, $$('.year-chip').length);
     ok('竞赛档位表渲染', $$('#compRubricTable tbody tr').length === 9, $$('#compRubricTable tbody tr').length);
     ok('活动档位表渲染', $$('#actRubricTable tbody tr').length === 9, $$('#actRubricTable tbody tr').length);
     ok('每维都有「没有这项」', $$('[data-skip]').length === 6, $$('[data-skip]').length);
@@ -195,6 +195,18 @@ async function main() {
     const progress = $('#growthSide .task-progress');
     ok('下一步可勾选', !!progress && progress.textContent.indexOf('/') >= 0, progress && progress.textContent);
 
+    ok('去向推测区域存在', !!$('#destMain') && !!$('#destSide'));
+    ok('去向指数区间显示', ($('.dest-index b') || {}).textContent.indexOf('–') >= 0, ($('.dest-index b') || {}).textContent);
+    ok('数据来源已渲染', $$('.source-item').length >= 6, $$('.source-item').length);
+    $('#btnAddCase').click();
+    await sleep(200);
+    ok('案例表单打开', !!$('#caseForm'));
+    $('#caseForm').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await sleep(300);
+    ok('案例保存并显示', $$('.case-card').length >= 1, $$('.case-card').length);
+    ok('案例相似度显示', ($('.case-sim b') || {}).textContent.indexOf('%') >= 0, ($('.case-sim b') || {}).textContent);
+
+
     const overlayBtn = $('#mOverlay');
     if (overlayBtn) overlayBtn.click();
     await sleep(250);
@@ -213,11 +225,8 @@ async function main() {
     ok('雷达图例有多所梦校', $$('#radarLegend [data-unpick]').length >= 2, $$('#radarLegend [data-unpick]').length);
     ok('出现梦校对比条', $$('.dream-card').length >= 2, $$('.dream-card').length);
 
-    const chips = $$('.year-chip');
-    chips[2].click();
-    await sleep(250);
-    ok('切换毕业生届别', $('.year-chip.on').dataset.cohort === chips[2].dataset.cohort, chips[2].dataset.cohort);
-    ok('雷达届别同步', $('#overlayYear').value === chips[2].dataset.cohort, $('#overlayYear').value);
+    ok('毕业生功能已关闭', $('#sec-cohort').hidden && $('#nav-cohort').hidden && $('#yearControl').hidden);
+    ok('首页不再显示届别对比', $('#cohortChip').textContent.trim() === '', $('#cohortChip').textContent);
 
     const form = $('#customForm');
     form.querySelector('[name=name]').value = 'HIMCM 数学建模';
