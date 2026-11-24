@@ -707,8 +707,16 @@
   /* 毕业生对照开关：拿到真实学校数据前先关闭，代码与示例数据保留 */
   const COHORT_ENABLED = false;
 
-  const VERSION = '1.3.0';
+  const VERSION = '1.3.1';
   const CHANGELOG = [
+    {
+      version: '1.3.1', date: '2026-11-24', title: '修复隐藏控件与缓存',
+      items: [
+        '修复「毕业生」关闭后雷达图的「届别」下拉仍然显示的问题（CSS 覆盖了 hidden）',
+        '给 CSS / JS 引用加版本号，更新后浏览器不会混用旧脚本；以后每次发版改这个号',
+        '单文件版同步更新'
+      ]
+    },
     {
       version: '1.3.0', date: '2026-11-24', title: '去向推测与案例相似度',
       items: [

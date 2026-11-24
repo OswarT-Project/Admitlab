@@ -226,6 +226,7 @@ async function main() {
     ok('出现梦校对比条', $$('.dream-card').length >= 2, $$('.dream-card').length);
 
     ok('毕业生功能已关闭', $('#sec-cohort').hidden && $('#nav-cohort').hidden && $('#yearControl').hidden);
+    ok('届别控件真的不显示', getComputedStyle($('#yearControl')).display === 'none', getComputedStyle($('#yearControl')).display);
     ok('首页不再显示届别对比', $('#cohortChip').textContent.trim() === '', $('#cohortChip').textContent);
 
     const form = $('#customForm');
